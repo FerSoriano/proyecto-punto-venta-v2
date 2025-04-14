@@ -6,8 +6,10 @@
 
 using namespace std;
 
-static int totalProductos = 5;
-static Producto productos[100] = {
+// static int productos.size() = 5;
+
+// vector
+static vector<Producto> productos = {
     {1,"Agua",13.39,18.55,12,4,1},
     {2,"Leche",12.35,15.5,16,5,1},
     {3,"Huevos",22.4,30.39,20,7,1},
@@ -15,9 +17,11 @@ static Producto productos[100] = {
     {5,"Refresco",10.99,14.75,30,8,1}
 };
 
+
+
 Producto buscarProducto(string nombreProducto){
     Producto producto = {0, "", 0.0, 0.0, 0, 0, 0};
-    for(int i = 0; i < totalProductos; i++){
+    for(int i = 0; i < productos.size(); i++){
         if(convertirMinus(productos[i].producto) == convertirMinus(nombreProducto)) { producto = productos[i]; break; }
     }
     return producto;
@@ -64,9 +68,10 @@ bool compararPorNombre(const Producto &a, const Producto &b) {
 
 void mostrarProductos(int tipoOrden){
     if 
-        (tipoOrden == 1) sort(productos,productos + totalProductos,compararPorId); // se ordena por ID
+        // (tipoOrden == 1) sort(productos,productos + productos.size(),compararPorId); // se ordena por ID
+        (tipoOrden == 1) sort(productos.begin(),productos.end(),compararPorId); // se ordena por ID
     else 
-        sort(productos,productos + totalProductos,compararPorNombre); // se ordena por nombre producto
+        sort(productos.begin(),productos.end(),compararPorNombre); // se ordena por nombre producto
 
     cout << "---------------------------------------------------------------------------\n\t\t\t\tINVENTARIO\n---------------------------------------------------------------------------\n";
         cout << left << setw(5) << "Id"
@@ -78,7 +83,7 @@ void mostrarProductos(int tipoOrden){
                     << "Resurtir" << endl;
 
         char resurtir;
-        for (int i = 0; i < totalProductos; i++){
+        for (int i = 0; i < productos.size(); i++){
             if(productos[i].status == 1){
                 resurtir = (productos[i].existencias <= productos[i].nivelReorden) ? '*' : ' ';
                 cout << left << setw(5) << productos[i].id
@@ -120,20 +125,15 @@ void altaProducto(){
                 if(existencia<nivelReorden){cout << "\n\n*** La Existencia no puede ser menor que el Nivel de Reorden. Intenta de nuevo ***\n\n";}
             } while (existencia<nivelReorden);
 
-            // se agrega el producto.
-            productos[totalProductos].id = totalProductos + 1;
-            productos[totalProductos].producto = nombreProducto;
-            productos[totalProductos].pc = pc;
-            productos[totalProductos].pv = pv;
-            productos[totalProductos].existencias = existencia;
-            productos[totalProductos].nivelReorden = nivelReorden;
-            productos[totalProductos].status = 1;
-            totalProductos++; // se incrementa en 1 la cantidad de productos.
+            // TODO: CREAR UNA FUNCION PARA GUARDAR LOS DATOS EN EL CSV
+            // se agrega el producto en el vector.
+            productos.push_back({productos.back().id + 1, nombreProducto, pc, pv, existencia, nivelReorden, 1});
+            // guardarProductosCSV(producto)
             cout << "\n\nEl producto \"" << nombreProducto << "\" se agrego correctamente.\n\n";
         } 
         // el producto ya existe pero esta dado de baja. Se da de alta nuevamente con la misma info.
         else { 
-            sort(productos,productos + totalProductos,compararPorId); // ordenamos la lista para poderla modificar.
+            sort(productos.begin(),productos.end(),compararPorId); // ordenamos la lista para poderla modificar.
             productos[producto.id - 1].status = 1;
             cout << "\n\nEl producto \"" << producto.producto << "\" se dio de alta nuevamente.\n\n";
         }
@@ -174,7 +174,7 @@ void modificarProducto(){
     float pc, pv;
     int existencia, nivelReorden, opcion;
 
-    sort(productos,productos + totalProductos,compararPorId); // ordenamos la lista para poderla modificar.
+    sort(productos.begin(),productos.end(),compararPorId); // ordenamos la lista para poderla modificar.
     
     while (true){
         bool mostrarOpciones = true;
@@ -238,7 +238,7 @@ void bajaProducto(){
     Producto producto;
     string nombreProducto;
 
-    sort(productos,productos + totalProductos,compararPorId); // ordenamos la lista para poderla modificar.
+    sort(productos.begin(),productos.end(),compararPorId); // ordenamos la lista para poderla modificar.
 
     while(true){
         cout << "\n\n\tBAJA DE PRODUCTO\n\n";
@@ -254,10 +254,14 @@ void bajaProducto(){
 }
 
 void restarInventario(int id, int cantidad){
-    for(int i=0; i<totalProductos; i++){
+    for(int i=0; i<productos.size(); i++){
         if(productos[i].id == id){
             productos[i].existencias -= cantidad;
             break;
         }
     }
 }
+
+// TODO: Agregar logica para los CSVs
+void agregarProductoCSV(string producto);
+void guardarProductosCSV(vector<Producto> productos);
