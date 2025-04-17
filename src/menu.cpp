@@ -24,7 +24,7 @@ void menuCrearCSV(){
     cout << "\nDeseas crear el CSV de productos con los valores por default? (y: si): ";
     cin >> response;
     if(tolower(response)=='y') {
-        crearProductosCSV();
+        crearProductosCSV(true);
     } else {
         actualizarVectorProductos();
     }
