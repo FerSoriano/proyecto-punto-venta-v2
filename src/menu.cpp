@@ -4,6 +4,7 @@
 #include "../include/producto.h"
 #include "../include/venta.h"
 #include <iostream>
+// #include <cctype> // tolower()
 
 
 using namespace std;
@@ -15,6 +16,18 @@ int menuPrincipal(){
     cout << "\tOpcion: "; cin >> option;
     validarInput();
     return option;
+}
+
+void menuCrearCSV(){
+    limpiarConsola();
+    char response;
+    cout << "\nDeseas crear el CSV de productos con los valores por default? (y: si): ";
+    cin >> response;
+    if(tolower(response)=='y') {
+        crearProductosCSV();
+    } else {
+        actualizarVectorProductos();
+    }
 }
 
 void menuAdmin(){
