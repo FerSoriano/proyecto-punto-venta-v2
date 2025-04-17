@@ -3,12 +3,17 @@
 #include <iostream>
 #include <string>
 #include <iomanip> // uso de setw()
+#include <fstream> // ifstream (lectura) y ofstream (escritura)
+#include <sstream>   // Para ostringstream (formatear strings) y istringstream (parsear)
 
 using namespace std;
 
-// static int productos.size() = 5;
+static const string productosCSV = "data/productos.csv";
 
-// vector
+// vectores
+
+static vector<string> productoHeaders = {"id","producto","pc","pv","existencias","nivelReorden","status"};
+
 static vector<Producto> productos = {
     {1,"Agua",13.39,18.55,12,4,1},
     {2,"Leche",12.35,15.5,16,5,1},
@@ -21,11 +26,27 @@ static vector<Producto> productos = {
 
 Producto buscarProducto(string nombreProducto){
     Producto producto = {0, "", 0.0, 0.0, 0, 0, 0};
-    for(int i = 0; i < productos.size(); i++){
+    for(size_t i = 0; i < productos.size(); i++){
         if(convertirMinus(productos[i].producto) == convertirMinus(nombreProducto)) { producto = productos[i]; break; }
     }
     return producto;
 }
+
+// Para alta de productos nuevos. Se agrega al final.
+bool agregarProductoCSV(const string& nuevoProducto){
+    const string fileName = productosCSV;
+    ofstream file(fileName, ios::app); // Modo append
+    if(!file.is_open()){
+        cout << "\n\n *** Error al intentar abrir el archivo \"" << fileName << "\". Intenta de nuevo ***\n\n";
+        return false;
+    }
+
+    file << nuevoProducto << '\n';
+    file.close();
+    // cout << "El producto se agrego correctamente al CSV.\n\n" << endl;
+    return true;
+}
+
 
 void mostrarInventario(){
     int option;
@@ -83,7 +104,7 @@ void mostrarProductos(int tipoOrden){
                     << "Resurtir" << endl;
 
         char resurtir;
-        for (int i = 0; i < productos.size(); i++){
+        for (size_t i = 0; i < productos.size(); i++){
             if(productos[i].status == 1){
                 resurtir = (productos[i].existencias <= productos[i].nivelReorden) ? '*' : ' ';
                 cout << left << setw(5) << productos[i].id
@@ -125,11 +146,24 @@ void altaProducto(){
                 if(existencia<nivelReorden){cout << "\n\n*** La Existencia no puede ser menor que el Nivel de Reorden. Intenta de nuevo ***\n\n";}
             } while (existencia<nivelReorden);
 
-            // TODO: CREAR UNA FUNCION PARA GUARDAR LOS DATOS EN EL CSV
+            Producto nuevoProducto = {productos.back().id + 1, nombreProducto, pc, pv, existencia, nivelReorden, 1};
+            // se guardan valores a 2 decimales
+            ostringstream pc_str; pc_str << fixed << setprecision(2) << nuevoProducto.pc;
+            ostringstream pv_str; pv_str << fixed << setprecision(2) << nuevoProducto.pv;
+            // se crea el producto en formato CSV
+            string nuevoProductoStr = to_string(nuevoProducto.id) + "," + 
+                                    nuevoProducto.producto + "," + 
+                                    pc_str.str() + "," +
+                                    pv_str.str() + "," +
+                                    to_string(nuevoProducto.existencias) + "," + 
+                                    to_string(nuevoProducto.nivelReorden) + "," + 
+                                    "1"; 
             // se agrega el producto en el vector.
-            productos.push_back({productos.back().id + 1, nombreProducto, pc, pv, existencia, nivelReorden, 1});
-            // guardarProductosCSV(producto)
+            productos.push_back(nuevoProducto);
             cout << "\n\nEl producto \"" << nombreProducto << "\" se agrego correctamente.\n\n";
+            
+            // se agrega el producto en el CSV.
+            agregarProductoCSV(nuevoProductoStr);
         } 
         // el producto ya existe pero esta dado de baja. Se da de alta nuevamente con la misma info.
         else { 
@@ -254,7 +288,7 @@ void bajaProducto(){
 }
 
 void restarInventario(int id, int cantidad){
-    for(int i=0; i<productos.size(); i++){
+    for(size_t i=0; i<productos.size(); i++){
         if(productos[i].id == id){
             productos[i].existencias -= cantidad;
             break;
@@ -262,6 +296,72 @@ void restarInventario(int id, int cantidad){
     }
 }
 
-// TODO: Agregar logica para los CSVs
-void agregarProductoCSV(string producto);
-void guardarProductosCSV(vector<Producto> productos);
+// Sobreescribir el archivo con el vector: modificaciones, bajas o altas de productos ya existentes.
+bool crearProductosCSV(){
+    ofstream file;
+    file.open(productosCSV, ios::out); // Abre para escribir (sobrescribe)
+    if(!file.is_open()){
+        cout << "\n\n *** Error al intentar abrir el archivo \"" << std::filesystem::absolute(productosCSV) << "\". Intenta de nuevo ***\n\n";
+        return false;
+    }
+
+    ostringstream headers;
+    for(size_t i=0; i < productoHeaders.size(); i++){
+        if(i!=0) headers << ",";
+        headers << productoHeaders[i];
+    }
+
+    file << headers.str() << endl; // se agregan los headers a nuestro file, pero primero se convierte a str.
+
+    // recorremos el vector de productos
+    for(const auto&producto : productos){
+        file << producto.id << ","
+            << producto.producto << ","
+            << producto.pc << ","
+            << producto.pv << ","
+            << producto.existencias << ","
+            << producto.nivelReorden << ","
+            << producto.status << '\n';
+    }
+
+    file.close();
+    cout << "\nArchivo creado en: " << std::filesystem::absolute(productosCSV) << endl;
+    return true;
+}
+
+void actualizarVectorProductos(){
+    productos.clear(); // limpiamos el vector
+
+    ifstream file(productosCSV); // leer CSV
+
+    if(!file.is_open()){
+        cout << "\n\n *** Error al intentar abrir el archivo \"" << std::filesystem::absolute(productosCSV) << "\". Intenta de nuevo ***\n\n";
+        return;
+    }
+
+    string row;
+    bool isFirstRow = true;
+
+    while(getline(file, row)){
+        if (isFirstRow){
+            isFirstRow = false;
+            continue; // saltamos header
+        }
+
+        stringstream ss(row); // trata a un string como un flujo de datos
+        string field;
+        Producto p;
+
+        // cada que se llama a getline() avanza automáticamente al siguiente valor. El "cursor" interno de ss se mueve justo después de la primera coma.
+        getline(ss,field,','); p.id = stoi(field);
+        getline(ss,field,','); p.producto = field;
+        getline(ss,field,','); p.pc = stof(field);
+        getline(ss,field,','); p.pv = stof(field);
+        getline(ss,field,','); p.existencias = stoi(field);
+        getline(ss,field,','); p.nivelReorden = stoi(field);
+        getline(ss,field,','); p.status = stoi(field);
+
+        productos.push_back(p); // se agrega el producto al vector
+    }
+    file.close();
+}

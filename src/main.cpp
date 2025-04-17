@@ -9,6 +9,7 @@ using namespace std;
 int main(){
     bool isExcecute = true;
     int optionMenu;
+    menuCrearCSV();
     while (isExcecute){
         optionMenu = menuPrincipal();
         switch (optionMenu){

@@ -23,5 +23,8 @@ void consultarProducto();
 void modificarProducto();
 void bajaProducto();
 void restarInventario(int id, int cantidad);
+bool crearProductosCSV();
+bool agregarProductoCSV(const std::string& nuevoProducto);
+void actualizarVectorProductos();
 
 #endif
