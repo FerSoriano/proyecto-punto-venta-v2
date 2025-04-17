@@ -3,5 +3,6 @@
 
 int menuPrincipal();
 void menuAdmin();
+void menuCrearCSV();
 
 #endif
