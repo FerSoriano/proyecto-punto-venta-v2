@@ -48,6 +48,41 @@ bool agregarProductoCSV(const string& nuevoProducto){
 }
 
 
+// Sobreescribir el archivo con el vector: 
+bool crearProductosCSV(bool valoresDefault){
+    ofstream file;
+    file.open(productosCSV, ios::out); // Abre para escribir (sobrescribe)
+    if(!file.is_open()){
+        cout << "\n\n *** Error al intentar abrir el archivo \"" << filesystem::absolute(productosCSV) << "\". Intenta de nuevo ***\n\n";
+        return false;
+    }
+
+    ostringstream headers;
+    for(size_t i=0; i < productoHeaders.size(); i++){
+        if(i!=0) headers << ",";
+        headers << productoHeaders[i];
+    }
+
+    file << headers.str() << endl; // se agregan los headers a nuestro file, pero primero se convierte a str.
+
+    // recorremos el vector de productos
+    for(const auto&producto : productos){
+        file << producto.id << ","
+            << producto.producto << ","
+            << producto.pc << ","
+            << producto.pv << ","
+            << producto.existencias << ","
+            << producto.nivelReorden << ","
+            << producto.status << '\n';
+    }
+
+    file.close();
+    if(valoresDefault) cout << "\nArchivo creado en: " << filesystem::absolute(productosCSV) << endl;
+
+    return true;
+}
+
+
 void mostrarInventario(){
     int option;
     bool ejecutarMenu = true;
@@ -169,6 +204,7 @@ void altaProducto(){
         else { 
             sort(productos.begin(),productos.end(),compararPorId); // ordenamos la lista para poderla modificar.
             productos[producto.id - 1].status = 1;
+            crearProductosCSV(false); // actualizamos el CSV
             cout << "\n\nEl producto \"" << producto.producto << "\" se dio de alta nuevamente.\n\n";
         }
     }
@@ -207,6 +243,7 @@ void modificarProducto(){
     string nombreProducto;
     float pc, pv;
     int existencia, nivelReorden, opcion;
+    bool modificado = false;
 
     sort(productos.begin(),productos.end(),compararPorId); // ordenamos la lista para poderla modificar.
     
@@ -230,6 +267,7 @@ void modificarProducto(){
                             productos[producto.id - 1].pc = pc; // actualizamos el producto original con el ID.
                             producto = buscarProducto(nombreProducto); // actualizamos nuestro producto temporal.
                             cout << "\n\nPrecio de compra actualizado\n\n";
+                            modificado = true;
                             break;
                         case 2:
                             do{
@@ -240,6 +278,7 @@ void modificarProducto(){
                             productos[producto.id - 1].pv = pv; // actualizamos el producto original con el ID.
                             producto = buscarProducto(nombreProducto); // actualizamos nuestro producto temporal.
                             cout << "\n\nPrecio de venta actualizado\n\n";
+                            modificado = true;
                             break;
                         case 3:
                             cout << "\nExistencias actuales: "<< producto.existencias;
@@ -247,6 +286,7 @@ void modificarProducto(){
                             productos[producto.id - 1].existencias = existencia; // actualizamos el producto original con el ID.
                             producto = buscarProducto(nombreProducto); // actualizamos nuestro producto temporal.
                             cout << "\n\nExistencia actualizada\n\n";
+                            modificado = true;
                             break;
                         case 4:
                             cout << "\nNivel de reorden actual: "<< producto.nivelReorden;
@@ -254,6 +294,7 @@ void modificarProducto(){
                             productos[producto.id - 1].nivelReorden = nivelReorden; // actualizamos el producto original con el ID.
                             producto = buscarProducto(nombreProducto); // actualizamos nuestro producto temporal.
                             cout << "\n\nNivel de reorden actualizado\n\n";
+                            modificado = true;
                             break;
                         case 5:
                             limpiarConsola();
@@ -266,11 +307,13 @@ void modificarProducto(){
                 }
         } else { limpiarConsola(); cout << "\n\n*** No se encontro el producto \"" << nombreProducto << "\" ***\n\n"; }
     }
+    if(modificado) crearProductosCSV(false); // actualizar el CSV
 }
 
 void bajaProducto(){
     Producto producto;
     string nombreProducto;
+    bool baja = false;
 
     sort(productos.begin(),productos.end(),compararPorId); // ordenamos la lista para poderla modificar.
 
@@ -284,7 +327,9 @@ void bajaProducto(){
 
         productos[producto.id - 1].status = 0;
         cout << "El producto \"" << producto.producto << "\" se dio de baja\n";
+        baja = true;
     }
+    if(baja) crearProductosCSV(false); //actualizar el CSV
 }
 
 void restarInventario(int id, int cantidad){
@@ -296,38 +341,6 @@ void restarInventario(int id, int cantidad){
     }
 }
 
-// Sobreescribir el archivo con el vector: modificaciones, bajas o altas de productos ya existentes.
-bool crearProductosCSV(){
-    ofstream file;
-    file.open(productosCSV, ios::out); // Abre para escribir (sobrescribe)
-    if(!file.is_open()){
-        cout << "\n\n *** Error al intentar abrir el archivo \"" << std::filesystem::absolute(productosCSV) << "\". Intenta de nuevo ***\n\n";
-        return false;
-    }
-
-    ostringstream headers;
-    for(size_t i=0; i < productoHeaders.size(); i++){
-        if(i!=0) headers << ",";
-        headers << productoHeaders[i];
-    }
-
-    file << headers.str() << endl; // se agregan los headers a nuestro file, pero primero se convierte a str.
-
-    // recorremos el vector de productos
-    for(const auto&producto : productos){
-        file << producto.id << ","
-            << producto.producto << ","
-            << producto.pc << ","
-            << producto.pv << ","
-            << producto.existencias << ","
-            << producto.nivelReorden << ","
-            << producto.status << '\n';
-    }
-
-    file.close();
-    cout << "\nArchivo creado en: " << std::filesystem::absolute(productosCSV) << endl;
-    return true;
-}
 
 void actualizarVectorProductos(){
     productos.clear(); // limpiamos el vector
@@ -335,7 +348,7 @@ void actualizarVectorProductos(){
     ifstream file(productosCSV); // leer CSV
 
     if(!file.is_open()){
-        cout << "\n\n *** Error al intentar abrir el archivo \"" << std::filesystem::absolute(productosCSV) << "\". Intenta de nuevo ***\n\n";
+        cout << "\n\n *** Error al intentar abrir el archivo \"" << filesystem::absolute(productosCSV) << "\". Intenta de nuevo ***\n\n";
         return;
     }
 
