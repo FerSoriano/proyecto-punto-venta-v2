@@ -7,8 +7,8 @@ Sistema mejorado de punto de venta con persistencia en CSV y arquitectura modula
 - [Requisitos](#-requisitos)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Compilación y Ejecución](#-compilación-y-ejecución)
-- [Características Principales](#✨-características-principales)
-- [Módulos](#📦-módulos)
+- [Características Principales](#-características-principales)
+- [Módulos](#-módulos)
 
 ---
 
