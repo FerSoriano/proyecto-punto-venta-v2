@@ -20,5 +20,8 @@ void bajaUsuario();
 void modificarUsuario();
 void consultarUsuario();
 void mostrarCuentasUsuarios();
+bool crearUsuariosCSV(bool valoresDefault);
+bool agregarUsuarioCSV(const std::string& nuevoUsuario);
+void actualizarVectorUsuarios();
 
 #endif

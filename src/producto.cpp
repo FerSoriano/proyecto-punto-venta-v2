@@ -48,7 +48,7 @@ bool agregarProductoCSV(const string& nuevoProducto){
 }
 
 
-// Sobreescribir el archivo con el vector: 
+// Sobreescribir el archivo con el vector
 bool crearProductosCSV(bool valoresDefault){
     ofstream file;
     file.open(productosCSV, ios::out); // Abre para escribir (sobrescribe)
