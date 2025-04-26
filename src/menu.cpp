@@ -21,12 +21,20 @@ int menuPrincipal(){
 void menuCrearCSV(){
     limpiarConsola();
     char response;
-    cout << "\nDeseas crear el CSV de productos con los valores por default? (y: si): ";
+    cout << "\nDeseas crear el CSV de PRODUCTOS con los valores por default? (y: si): ";
     cin >> response;
     if(tolower(response)=='y') {
         crearProductosCSV(true);
     } else {
         actualizarVectorProductos();
+    }
+
+    cout << "\n\nDeseas crear el CSV de USUARIOS con los valores por default? (y: si): ";
+    cin >> response;
+    if(tolower(response) == 'y'){
+        crearUsuariosCSV(true);
+    } else {
+        actualizarVectorUsuarios();
     }
 }
 

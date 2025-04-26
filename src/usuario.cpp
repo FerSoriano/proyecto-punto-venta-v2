@@ -3,13 +3,18 @@
 #include <iostream>
 #include <string>
 #include <iomanip> // uso de setw()
+#include <fstream> // ifstream (lectura) y ofstream (escritura)
+#include <sstream>   // Para ostringstream (formatear strings) y istringstream (parsear)
 
 using namespace std;
 
+static const string usuariosCSV = "data/users.csv";
+
 string currentUser;
 
-static int totalUsuarios = 3;
-static Usuario usuarios[100] = {
+// vectores
+static vector<string> usuariosHeaders = {"usuario", "pass", "tipo", "status"};
+static vector<Usuario> usuarios = {
     {"admin", "123", 1, 1}, 
     {"vend1", "123", 2, 1}, 
     {"vend2", "123", 2, 1}
@@ -25,7 +30,7 @@ bool validarLogin(int tipoUsuario){
         cout << "\nPassword: ";
         cin >> pass;
 
-        for (int i = 0; i < totalUsuarios; i++){
+        for (size_t i = 0; i < usuarios.size(); i++){
             if (usuarios[i].usuario == usuario && usuarios[i].pass == pass && usuarios[i].tipo == tipoUsuario && usuarios[i].status == 1){
                 currentUser = usuario;
                 isValid = true;
@@ -40,11 +45,55 @@ bool validarLogin(int tipoUsuario){
 
 Usuario buscarUsuario(string nombreUsuario){
     Usuario usuario = {"", "", 0, 0};
-    for(int i = 0; i < totalUsuarios; i++){
+    for(size_t i = 0; i < usuarios.size(); i++){
         if(convertirMinus(usuarios[i].usuario) == convertirMinus(nombreUsuario)) { usuario = usuarios[i]; break; }
     }
     return usuario;
 }
+
+// Para agregar usuarios nuevos, se agrega al final del CSV.
+bool agregarUsuarioCSV(const string& nuevoUsuario){
+    const string fileName = usuariosCSV;
+    ofstream file(fileName, ios::app); // append
+    if(!file.is_open()){
+        cout << "\n\n *** Error al abrir el archivo \"" << fileName << "\". Intenta de nuevo ***";
+        return false;
+    }
+    file << nuevoUsuario << '\n';
+    file.close();
+    return true;
+}
+
+// Sobreescribir el archivo con el vector
+bool crearUsuariosCSV(bool valoresDefault){
+    const string fileName = usuariosCSV;
+    ofstream file(fileName, ios::out); // Abre para sobreescribir
+    if(!file.is_open()){
+        cout << "\n\n *** Error al abrir el archivo \"" << fileName << "\". Intenta de nuevo ***";
+        return false;
+    }
+
+    // crear headers
+    ostringstream headers;
+    for(size_t i = 0; i < usuariosHeaders.size(); i++){
+        if(i!=0) headers << ",";
+        headers << usuariosHeaders[i];
+    }
+
+    file << headers.str() << endl; // agregamos headers al CSV
+
+    for(const auto& usuario : usuarios){
+        file << usuario.usuario << ","
+            << usuario.pass << ","
+            << usuario.tipo << ","
+            << usuario.status << "\n";             
+    }
+
+    file.close();
+    if(valoresDefault) cout << "\nArchivo creado en: " << filesystem::absolute(usuariosCSV) << endl;
+    return true;
+}
+
 
 void mostrarMenuAdminCuentasUsuario(){
     int option;
@@ -110,19 +159,22 @@ void altaUsuario(){
                 cout << "*** Tipo incorrecto. Intenta de nuevo ***" << endl;
         }
 
-        // se agrega el producto.
-        usuarios[totalUsuarios].usuario = nombreUsuario;
-        usuarios[totalUsuarios].pass = pass;
-        usuarios[totalUsuarios].tipo = tipo;
-        usuarios[totalUsuarios].status = 1;
-        totalUsuarios++; // se incrementa en 1 la cantidad de usuarios.
+        Usuario nuevoUsuario = {nombreUsuario, pass, tipo, 1}; // 1 = status activo
 
+        // se crea el usuario en formato CSV
+        string nuevoUsuarioStr = nombreUsuario + "," + pass + "," + to_string(tipo) + "," + "1";
+        
+        // se agrega el usuario al vector
+        usuarios.push_back(nuevoUsuario);
         cout << "\n\nEl Usuario \"" << nombreUsuario << "\" se agrego correctamente.\n\n";
+        // se agrega el usuario al CSV
+        agregarUsuarioCSV(nuevoUsuarioStr);
     }
 }
 
 void bajaUsuario(){
     string nombreUsuario;
+    bool baja = false;
     
     while(true){
         bool usuarioEncontrado = false;
@@ -130,29 +182,31 @@ void bajaUsuario(){
         cout << "Usuario: "; cin >> nombreUsuario;
         if (nombreUsuario == "*"){limpiarConsola(); break;}
 
-        for(int i = 0; i<totalUsuarios; i++){
+        for(size_t i = 0; i<usuarios.size(); i++){
             if(convertirMinus(usuarios[i].usuario) == convertirMinus(nombreUsuario) && usuarios[i].status == 1) {
                 usuarios[i].status = 0; 
                 cout << "El usuario \"" << usuarios[i].usuario << "\" se dio de baja\n\n";
                 usuarioEncontrado = true;
+                baja = true;
                 break; 
             }
         }
-
         if(!usuarioEncontrado){cout << "\n\n***Usuario \"" << nombreUsuario << "\" no encontrado. Intenta de nuevo. ***\n\n";}
     }
+    if(baja) crearUsuariosCSV(false); // se actualiza el CSV
 }
 
 void modificarUsuario(){
     string nombreUsuario, pass;
     int opcion, tipo;
+    bool modificado = false;
 
     while (true){
         bool usuarioEncontrado = false;
         bool mostrarOpciones = true;
         cout << "\n\n\tMODIFICACIONES\n\nUsuario: "; cin >> nombreUsuario;
         if (nombreUsuario == "*"){limpiarConsola(); break;}
-        for(int i = 0; i<totalUsuarios; i++){
+        for(size_t i = 0; i<usuarios.size(); i++){
             if(convertirMinus(usuarios[i].usuario) == convertirMinus(nombreUsuario) && usuarios[i].status == 1) {
                 limpiarConsola();
                 while (mostrarOpciones){
@@ -165,12 +219,14 @@ void modificarUsuario(){
                             cout << "\nContraseña nueva: "; cin >> pass;
                             usuarios[i].pass = pass; // actualizamos el password
                             cout << "\n\nContraseña actualizada\n\n";
+                            modificado = true;
                             break;
                         case 2:
                             cout << "\nTipo actual: "<< usuarios[i].tipo;
                             cout << "\nTipo nuevo: "; cin >> tipo; validarInput();
                             usuarios[i].tipo = tipo; // actualizamos el tipo
                             cout << "\n\nTipo actualizado\n\n";
+                            modificado = true;
                             break;
                         case 3:
                             limpiarConsola();
@@ -186,6 +242,7 @@ void modificarUsuario(){
         }
         if(!usuarioEncontrado){cout << "\n\n***Usuario \"" << nombreUsuario << "\" no encontrado. Intenta de nuevo. ***\n\n";}
     }
+    if(modificado) crearUsuariosCSV(false); // actualizar CSV
 }
 
 void consultarUsuario(){
@@ -216,7 +273,7 @@ void mostrarCuentasUsuarios(){
                     << setw(10) << "Pass"
                     << setw(10) << "Tipo"
                     << "Status" << endl;
-    for(int i = 0; i < totalUsuarios; i++){
+    for(size_t i = 0; i < usuarios.size(); i++){
         if(usuarios[i].status == 1){
             cout << left << setw(15) << usuarios[i].usuario
                     << setw(10) << usuarios[i].pass
@@ -225,4 +282,39 @@ void mostrarCuentasUsuarios(){
         }
     }
     cout << "\n\n";
+}
+
+// actualizar vector al iniciar el programa
+void actualizarVectorUsuarios(){
+    usuarios.clear();
+
+    ifstream file(usuariosCSV);
+
+    if(!file.is_open()){
+        cout << "\n\n *** Error al intentar abrir el archivo \"" << filesystem::absolute(usuariosCSV) << "\". Intenta de nuevo ***\n\n";
+        return;
+    }
+
+    string row;
+    bool isFirstRow = true;
+
+    while(getline(file,row)){
+        if(isFirstRow){
+            isFirstRow = false;
+            continue;; // saltamos el header
+        }
+
+        stringstream ss(row);
+        string field;
+        Usuario u;
+
+        getline(ss,field,','); u.usuario = field;
+        getline(ss,field,','); u.pass = field;
+        getline(ss,field,','); u.tipo = stoi(field);
+        getline(ss,field,','); u.status = stoi(field);
+
+        usuarios.push_back(u); // se agrega el usuario al vector
+    }
+
+    file.close();
 }
