@@ -3,6 +3,7 @@
 #include "../include/venta.h"
 #include "../include/menu.h"
 #include <iostream>
+#include <stdexcept>
 
 using namespace std;
 
