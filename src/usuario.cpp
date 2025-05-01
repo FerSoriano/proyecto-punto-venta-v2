@@ -52,16 +52,14 @@ Usuario buscarUsuario(string nombreUsuario){
 }
 
 // Para agregar usuarios nuevos, se agrega al final del CSV.
-bool agregarUsuarioCSV(const string& nuevoUsuario){
+void agregarUsuarioCSV(const string& nuevoUsuario){
     const string fileName = usuariosCSV;
     ofstream file(fileName, ios::app); // append
     if(!file.is_open()){
-        cout << "\n\n *** Error al abrir el archivo \"" << fileName << "\". Intenta de nuevo ***";
-        return false;
+        throw runtime_error("\n\n *** Error al abrir el archivo \"" + fileName + "\". Intenta de nuevo ***");
     }
     file << nuevoUsuario << '\n';
     file.close();
-    return true;
 }
 
 // Sobreescribir el archivo con el vector
@@ -69,8 +67,7 @@ bool crearUsuariosCSV(bool valoresDefault){
     const string fileName = usuariosCSV;
     ofstream file(fileName, ios::out); // Abre para sobreescribir
     if(!file.is_open()){
-        cout << "\n\n *** Error al abrir el archivo \"" << fileName << "\". Intenta de nuevo ***";
-        return false;
+        throw runtime_error("\n\n *** Error al abrir el archivo \"" + fileName + "\". Intenta de nuevo ***");
     }
 
     // crear headers
@@ -291,8 +288,7 @@ void actualizarVectorUsuarios(){
     ifstream file(usuariosCSV);
 
     if(!file.is_open()){
-        cout << "\n\n *** Error al intentar abrir el archivo \"" << filesystem::absolute(usuariosCSV) << "\". Intenta de nuevo ***\n\n";
-        return;
+        throw runtime_error("\n\n *** Error actualizando el vector. No se pudo abrir el archivo \"" + filesystem::absolute(usuariosCSV).string() + "\". ***\n\n");
     }
 
     string row;

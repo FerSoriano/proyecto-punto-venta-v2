@@ -33,18 +33,14 @@ Producto buscarProducto(string nombreProducto){
 }
 
 // Para alta de productos nuevos. Se agrega al final.
-bool agregarProductoCSV(const string& nuevoProducto){
+void agregarProductoCSV(const string& nuevoProducto){
     const string fileName = productosCSV;
     ofstream file(fileName, ios::app); // Modo append
     if(!file.is_open()){
-        cout << "\n\n *** Error al intentar abrir el archivo \"" << fileName << "\". Intenta de nuevo ***\n\n";
-        return false;
+        throw runtime_error("\n\n *** Error al intentar abrir el archivo \"" + fileName + "\". Intenta de nuevo ***\n\n");
     }
-
     file << nuevoProducto << '\n';
     file.close();
-    // cout << "El producto se agrego correctamente al CSV.\n\n" << endl;
-    return true;
 }
 
 
@@ -53,8 +49,7 @@ bool crearProductosCSV(bool valoresDefault){
     ofstream file;
     file.open(productosCSV, ios::out); // Abre para escribir (sobrescribe)
     if(!file.is_open()){
-        cout << "\n\n *** Error al intentar abrir el archivo \"" << filesystem::absolute(productosCSV) << "\". Intenta de nuevo ***\n\n";
-        return false;
+        throw runtime_error("\n\n *** Error al intentar abrir el archivo \"" + filesystem::absolute(productosCSV).string() + "\". Intenta de nuevo ***\n\n");
     }
 
     ostringstream headers;
@@ -77,7 +72,7 @@ bool crearProductosCSV(bool valoresDefault){
     }
 
     file.close();
-    if(valoresDefault) cout << "\nArchivo creado en: " << filesystem::absolute(productosCSV) << endl;
+    if(valoresDefault) cout << "Archivo creado en: " << filesystem::absolute(productosCSV) << endl;
 
     return true;
 }
@@ -124,7 +119,6 @@ bool compararPorNombre(const Producto &a, const Producto &b) {
 
 void mostrarProductos(int tipoOrden){
     if 
-        // (tipoOrden == 1) sort(productos,productos + productos.size(),compararPorId); // se ordena por ID
         (tipoOrden == 1) sort(productos.begin(),productos.end(),compararPorId); // se ordena por ID
     else 
         sort(productos.begin(),productos.end(),compararPorNombre); // se ordena por nombre producto
@@ -348,8 +342,7 @@ void actualizarVectorProductos(){
     ifstream file(productosCSV); // leer CSV
 
     if(!file.is_open()){
-        cout << "\n\n *** Error al intentar abrir el archivo \"" << filesystem::absolute(productosCSV) << "\". Intenta de nuevo ***\n\n";
-        return;
+        throw runtime_error("\n\n *** Error actualizando el vector. No se pudo abrir el archivo \"" + filesystem::absolute(productosCSV).string() + "\". ***\n\n");
     }
 
     string row;
