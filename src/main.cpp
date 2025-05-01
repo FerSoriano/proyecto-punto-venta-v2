@@ -11,22 +11,26 @@ int main(){
     int optionMenu;
     menuCrearCSV();
     while (isExcecute){
-        optionMenu = menuPrincipal();
-        switch (optionMenu){
-            case 1:
-                menuAdmin();
-                break;
-            case 2:
-                hacerVenta();
-                break;
-            case 3:
-                cout << "\n-------------------------------------------------\n     SALIENDO DEL SISTEMA. FIN DEL PROGRAMA.\n-------------------------------------------------\n\n";
-                isExcecute = false;
-                break;
-            default:
-                limpiarConsola();
-                cout << "\n*** Opcion invalida. Intenta de nuevo. ***";
-                break;
+        try{
+            optionMenu = menuPrincipal();
+            switch (optionMenu){
+                case 1:
+                    menuAdmin();
+                    break;
+                case 2:
+                    hacerVenta();
+                    break;
+                case 3:
+                    cout << "\n-------------------------------------------------\n     SALIENDO DEL SISTEMA. FIN DEL PROGRAMA.\n-------------------------------------------------\n\n";
+                    isExcecute = false;
+                    break;
+                default:
+                    limpiarConsola();
+                    cout << "\n*** Opcion invalida. Intenta de nuevo. ***";
+                    break;
+            }
+        } catch(const exception& e){
+            cerr << "Error no esperado: " << e.what() << endl;
         }
     }
     return 0;
